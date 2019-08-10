@@ -1,3 +1,4 @@
+import re
 import logging
 import yaml as yaml_util
 from kubernetes.client.rest import ApiException
@@ -53,27 +54,46 @@ def deploy_app(yml, cluster: Cluster):
 
     # 判断是创建还是更新
     try:
-        is_existed = client.get_app(
+        app, is_existed = client.get_app(
             resource_name=deploy_info.name,
             api_group=deploy_info.group,
             version=deploy_info.version,
             kind=deploy_info.kind,
-            yml=deploy_info.yml
+            namespace=deploy_info.namespace
         )
+    except ApiException as e:
+        LOG.error(e)
+        if e.status == 404:
+            is_existed = False
+            app = {}
+        else:
+            raise
+    try:
         if not is_existed:
             LOG.info(
                 "app {} is not existed. created it.".format(deploy_info.name))
+            status = deploy_info.yml.get("status", {})
+            status["fromManager"] = "Created"
+            deploy_info.yml["status"] = status
             client.create_app(
                 api_group=deploy_info.group,
+                namespace=deploy_info.namespace,
                 version=deploy_info.version,
                 kind=deploy_info.kind,
                 yml=deploy_info.yml
             )
         else:
-            LOG.info("app {} is already existed. updated it.".format(
-                deploy_info.name))
+            LOG.info("app {} is already existed.".format(deploy_info.name))
+            if app["spec"] == deploy_info.yml["spec"]:
+                LOG.info("No change. skip.")
+                return
+            LOG.info("Update it.")
+            status = deploy_info.yml.get("status", {})
+            status["fromManager"] = "Updated"
+            deploy_info.yml["status"] = status
             client.update_app(
                 resource_name=deploy_info.name,
+                namespace=deploy_info.namespace,
                 api_group=deploy_info.group,
                 version=deploy_info.version,
                 kind=deploy_info.kind,
@@ -90,8 +110,9 @@ def deploy_app(yml, cluster: Cluster):
 #################################
 
 class DeployInfo:
-    def __init__(self, *, name, group, version, kind, yml):
+    def __init__(self, *, name, namespace, group, version, kind, yml):
         self.name = name
+        self.namespace = namespace
         self.group = group
         self.version = version
         self.kind = kind
@@ -102,26 +123,40 @@ def get_group_version_from_yaml(yml):
     try:
         content = yaml_util.load(yml, Loader=yaml_util.SafeLoader)
 
-        api_version = content["apiVersion"]
-        kind = content["kind"]
+        api_version = content.get("apiVersion")
+        kind = content.get("kind")
+        if not kind:
+            content["kind"] = "App"
         metadata = content["metadata"]
         resource_name = metadata["name"]
+        namespace = metadata.get("namespace", "default")
+        new_metadata = {
+            "name": metadata["name"],
+            "namespace": namespace,
+        }
+        content["metadata"] = new_metadata
+
+        if not api_version:
+            selflink = metadata.get("selfLink")
+            api_version = re.findall(r'apis/(.+)/namespaces', selflink)[0]
+            content["apiVersion"] = api_version
+
+        api_results = list(api_version.split("/"))
+        if len(api_results) == 1:
+            api_group = ""
+            version = api_results[0]
+        else:
+            api_group, version = api_results[0], api_results[1]
     except Exception:
         # todo
         raise
 
-    api_results = list(api_version.split("/"))
-    if len(api_results) == 1:
-        api_group = ""
-        version = api_results[0]
-    else:
-        api_group, version = api_results[0], api_results[1]
-
     result = DeployInfo(
         name=resource_name,
+        namespace=namespace,
         group=api_group,
         version=version,
         kind=kind,
-        yml=yml
+        yml=content
     )
     return result

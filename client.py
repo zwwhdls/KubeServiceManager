@@ -16,47 +16,38 @@ class KubeClient:
             "authorization": "Bearer " + self.cluster_token}
         self.client = kube_client.ApiClient(configuration)
 
-    def create_app(self, *, api_group, version, kind, yml):
+    def create_app(self, *, namespace, api_group, version, kind, yml):
         api = kube_client.CustomObjectsApi(self.client)
-        api.create_cluster_custom_object(
+        api.create_namespaced_custom_object(
+            namespace=namespace,
             group=api_group,
             version=version,
-            plural=kind,
+            plural="apps",
             body=yml,
         )
 
-    def update_app(self, *, resource_name, api_group, version, kind, yml):
+    def update_app(self, *, resource_name, namespace, api_group, version, kind,
+                   yml):
         api = kube_client.CustomObjectsApi(self.client)
-        api.patch_cluster_custom_object(
+        api.patch_namespaced_custom_object(
             name=resource_name,
+            namespace=namespace,
             group=api_group,
             version=version,
-            plural=kind,
+            plural="apps",
             body=yml,
         )
 
-    def get_app(self, *, resource_name, api_group, version, kind, yml):
+    def get_app(self, *, resource_name, namespace, api_group, version, kind):
         api = kube_client.CustomObjectsApi(self.client)
-        resource = api.get_cluster_custom_object(
+        resource = api.get_namespaced_custom_object(
             name=resource_name,
+            namespace=namespace,
             group=api_group,
             version=version,
-            plural=kind,
+            plural="apps",
         )
 
-        return resource
-
-
-if __name__ == "__main__":
-    client = KubeClient(
-        cluster_host="https://localhost:6443",
-        cluster_token="eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJkZWZhdWx0Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6ImFkbWluLXVzZXItdG9rZW4teGI5emQiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoiYWRtaW4tdXNlciIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6ImQ3ODNmNGZkLWI4ZWUtMTFlOS04NzY1LTAyNTAwMDAwMDAwMSIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkZWZhdWx0OmFkbWluLXVzZXIifQ.XZkvFVDoJ3quPc-0OyzD6E2D8IpY1ISxyfX_X2hdAbJSbWmCmJlQiyjP5w8DILqtUFE5tD66L9mtjgvdk09JkaELUPNjHd0lWzn_396b7zkOpoRci_fLrytwjpEjxCdTCYrUHOb2OqQP8Clp_M6bLK70Ysx1XbCLJ07p7JrvJJ6E5nnKojf4BNsLOYl57OUs-uO5SdF0pEEpmbDPR8148nRQGSp7hbGFG0Q_ejJyLJCyVyiufRon5TKBNU9A4nO4eE8GYyHJhNdtYkfGt-nfwWenzictiYFxAPfh7Cu6EPGWlz7yBxEFUShdSNC951SUOT6-4jAnLBs_7eWQ59G4oA",
-    )
-    client.connect_cluster()
-    client.get_app(
-        resource_name="voting-sample",
-        api_group="app.o0w0o.cn",
-        version="v1",
-        kind="App",
-        yml=""
-    )
+        if resource:
+            return resource, True
+        return resource, False

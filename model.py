@@ -7,7 +7,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, String
 
 db_name = os.getenv("DB_NAME", "ksm.db")
-engine = create_engine('sqlite:////var/lib/{}'.format(db_name), echo=True)
+engine = create_engine('sqlite:////var/lib/{}'.format(db_name),
+                       connect_args={"check_same_thread": False})
 session = scoped_session(sessionmaker(
     autocommit=False, autoflush=False, bind=engine))
 Base = declarative_base()
