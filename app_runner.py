@@ -1,8 +1,8 @@
 import logging
 from sqlalchemy.exc import ProgrammingError, OperationalError
 
-from app import app_object
-from model import Base, engine, session
+from manager.app import app_object
+from manager.model import Base, engine, session
 
 LOG = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ def initdb():
     LOG.info("init database...")
     try:
         # declare tables
-        from model import Cluster
+        from manager.model import Cluster
         Base.metadata.create_all(engine)
 
     except Exception as e:

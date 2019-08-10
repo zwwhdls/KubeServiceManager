@@ -3,8 +3,8 @@ import logging
 import yaml as yaml_util
 from kubernetes.client.rest import ApiException
 
-from model import Cluster, session
-from client import KubeClient
+from manager.model import Cluster, session
+from manager.client import KubeClient
 
 LOG = logging.getLogger(__name__)
 

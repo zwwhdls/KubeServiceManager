@@ -1,7 +1,7 @@
 import logging
 from flask import request, jsonify, Blueprint
 
-from service import add_cluster, get_clusters, deploy_app, \
+from manager.service import add_cluster, get_clusters, deploy_app, \
     get_clusters_except_this, delete_cluster
 
 bp = Blueprint("multi-clusters", __name__)

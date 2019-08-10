@@ -9,7 +9,7 @@ def create_app():
     def ping():
         return jsonify(dict(message="PONG", time=int(time.time())))
 
-    from blueprint import bp
+    from manager.blueprint import bp
 
     app.register_blueprint(bp)
     return app
