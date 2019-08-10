@@ -1,2 +1,6 @@
 .idea/
 /env
+__pycache__/
+*.py[cod]
+*$py.class
+.idea_modules/
