@@ -4,3 +4,4 @@ __pycache__/
 *.py[cod]
 *$py.class
 .idea_modules/
+.DS_Store

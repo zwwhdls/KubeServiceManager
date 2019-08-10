@@ -2,6 +2,8 @@
 
 KubeServiceManager is a Multiple-Kubernetes-Cluster manager, work together with [KubeService](https://github.com/Coderhypo/KubeService).
 
+![](https://github.com/zwwhdls/KubeServiceManager/blob/master/img/mcluster.gif)
+
 # What is KubeServiceManager?
 
 When deploying app in Multiple Kubernetes Cluster, what you need to do is just to select target cluster in you app, and then apply it in whichever cluster. KubeServiceManager do the rest for you.
@@ -12,7 +14,7 @@ KubeServiceManager will deploy app and microservice in all clusters, but only th
 
 When an app is deployed in one cluster, the cluster sends a webhook to KubeServiceManager. Then KubeServiceManager will call api to create or update app in other clusters. KubeService itself decides which deployment in microservice is belonged to itself and deploy it.
 
-![]()
+![](https://github.com/zwwhdls/KubeServiceManager/blob/master/img/KubeServiceManager.jpg)
 
 # App demo
 
